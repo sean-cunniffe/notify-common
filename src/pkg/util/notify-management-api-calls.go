@@ -23,7 +23,7 @@ type notifier struct{
 	Component *component.Component
 }
 
-type notificationBody struct {
+type NotificationBody struct {
 	Message string `json:"message"`
 	From    string `json:"from"`
 }
@@ -40,7 +40,7 @@ func (n notifier) SendNotification(message string){
 		return
 	}
 
-	body := notificationBody{Message: message, From: n.Component.Name}
+	body := NotificationBody{Message: message, From: n.Component.Name}
 	data, _ := json.Marshal(body)
 	// TODO create body with from message
 	resp, err := http.Post(url, "application/json", bytes.NewReader(data))
