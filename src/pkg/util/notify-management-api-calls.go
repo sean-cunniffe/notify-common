@@ -11,15 +11,15 @@ import (
 	"github.com/sean-cunniffe/notify-common/src/pkg/component"
 )
 
-const(
+const (
 	notificationUrlEnv = "notification_management_url"
-	registerSubUrl = "/register" 
-	messageSubUrl = "/message"
+	registerSubUrl     = "/register"
+	messageSubUrl      = "/message"
 )
 
 var Notifier *notifier
 
-type notifier struct{
+type notifier struct {
 	Component *component.Component
 }
 
@@ -28,9 +28,9 @@ type NotificationBody struct {
 	From    string `json:"from"`
 }
 
-func (n notifier) SendNotification(message string){
+func (n notifier) SendNotification(message string) {
 	url, err := getNotificationMngtUrl()
-	if err != nil{
+	if err != nil {
 		log.Println(err.Error())
 	}
 	url += messageSubUrl
@@ -45,47 +45,49 @@ func (n notifier) SendNotification(message string){
 	// TODO create body with from message
 	resp, err := http.Post(url, "application/json", bytes.NewReader(data))
 
-	if err != nil{
+	if err != nil {
 		log.Println(err.Error())
-	}else{
+	} else {
 		log.Printf("%.v\n", resp)
 	}
-	
 
 }
 
 /*
 	Register a component with notify management
 */
-func SetupNotificationHandling(name, href,command, description string) *notifier{
+func SetupNotificationHandling(name, href, command, description string) *notifier {
 	// if href or command are "" then dont set but still allow component to send notification
-	comp := &component.Component{Name:name, Href:href, Command:command, Description:description}
+	comp := &component.Component{Name: name, Href: href, Command: command, Description: description}
 	if href != "" && command != "" && name != "" {
 		url, err := getNotificationMngtUrl()
-		if err != nil{
+		if err != nil {
 			log.Println(err.Error())
 		}
 		url += registerSubUrl
 		tempBody, _ := json.Marshal(*comp)
-		resp, err := http.Post(url, "application/json", bytes.NewReader(tempBody))
-		if err != nil {
-			log.Println(err)
-		}else{
-			log.Printf("%.v\n", resp)
+		for i := 0; i <= 10; i++ {
+			resp, err := http.Post(url, "application/json", bytes.NewReader(tempBody))
+			if err != nil {
+				log.Println(err)
+			} else {
+				log.Printf("%.v\n", resp)
+				break
+			}
 		}
-	}else{
+	} else {
 		log.Printf("cannot setup component notification with following component %.v\n", *comp)
 	}
 	Notifier = &notifier{Component: comp}
 	return Notifier
 }
 
-func getNotificationMngtUrl() (string, error){
+func getNotificationMngtUrl() (string, error) {
 	url, exists := os.LookupEnv(notificationUrlEnv)
 
 	if !exists {
-		return "", errors.New(notificationUrlEnv+" does not exist, cannot register component")
-		
+		return "", errors.New(notificationUrlEnv + " does not exist, cannot register component")
+
 	}
 
 	return url, nil
